@@ -11,8 +11,35 @@ import { Check, Clock, Search, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
+// Define proper types for our data
+type StudentAttendanceItem = {
+  id: number;
+  course: string;
+  date: string;
+  status: "present" | "absent" | "late";
+};
+
+type TeacherClassItem = {
+  id: number;
+  course: string;
+  time: string;
+  room: string;
+  students: number;
+  date: string;
+};
+
+type AdminClassItem = {
+  id: number;
+  course: string;
+  instructor: string;
+  time: string;
+  room: string;
+  students: number;
+  date: string;
+};
+
 // Sample attendance data
-const studentAttendance = [
+const studentAttendance: StudentAttendanceItem[] = [
   { id: 1, course: "Introduction to Computer Science", date: "2023-11-15", status: "present" },
   { id: 2, course: "Calculus II", date: "2023-11-15", status: "present" },
   { id: 3, course: "Modern Literature", date: "2023-11-15", status: "absent" },
@@ -22,7 +49,7 @@ const studentAttendance = [
 ];
 
 // Sample class data for teachers
-const teacherClasses = [
+const teacherClasses: TeacherClassItem[] = [
   { id: 1, course: "Introduction to Computer Science", time: "10:00 AM - 11:30 AM", room: "Hall 302", students: 35, date: "2023-11-15" },
   { id: 2, course: "Advanced Programming", time: "1:00 PM - 2:30 PM", room: "Tech Building 101", students: 28, date: "2023-11-15" },
   { id: 3, course: "Data Structures", time: "3:00 PM - 4:30 PM", room: "CS Lab 204", students: 22, date: "2023-11-15" },
@@ -31,7 +58,7 @@ const teacherClasses = [
 ];
 
 // Sample class data for admin view
-const allClasses = [
+const allClasses: AdminClassItem[] = [
   { id: 1, course: "Introduction to Computer Science", instructor: "Dr. Alan Turing", time: "10:00 AM - 11:30 AM", room: "Hall 302", students: 35, date: "2023-11-15" },
   { id: 2, course: "Calculus II", instructor: "Dr. Katherine Johnson", time: "1:00 PM - 2:30 PM", room: "Math Building 101", students: 28, date: "2023-11-15" },
   { id: 3, course: "Modern Literature", instructor: "Prof. Maya Angelou", time: "3:00 PM - 4:30 PM", room: "Arts 204", students: 22, date: "2023-11-15" },
@@ -44,10 +71,12 @@ const Attendance = () => {
   const [searchQuery, setSearchQuery] = useState("");
   
   // For demo purposes, we'll use "admin" role
-  const role: "admin" | "teacher" | "student" = "admin";
+  const userRole = "admin" as const;
+  type UserRole = "admin" | "teacher" | "student";
+  const role: UserRole = userRole;
   const userName = "John Doe";
 
-  // Filter data based on search query
+  // Filter data based on search query and role
   const getFilteredData = () => {
     if (role === "student") {
       return studentAttendance.filter(item => 
@@ -60,7 +89,7 @@ const Attendance = () => {
     } else {
       return allClasses.filter(item => 
         item.course.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.instructor && item.instructor.toLowerCase().includes(searchQuery.toLowerCase()))
+        item.instructor.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
   };
@@ -135,7 +164,7 @@ const Attendance = () => {
                       <TabsContent value="all">
                         <div className="space-y-4">
                           {role === "student" ? (
-                            filteredData.map(item => (
+                            (filteredData as StudentAttendanceItem[]).map(item => (
                               <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
                                 <div>
                                   <h3 className="font-medium">{item.course}</h3>
@@ -145,7 +174,7 @@ const Attendance = () => {
                               </div>
                             ))
                           ) : role === "teacher" ? (
-                            filteredData.map(item => (
+                            (filteredData as TeacherClassItem[]).map(item => (
                               <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
                                 <div>
                                   <h3 className="font-medium">{item.course}</h3>
@@ -157,7 +186,7 @@ const Attendance = () => {
                               </div>
                             ))
                           ) : (
-                            filteredData.map(item => (
+                            (filteredData as AdminClassItem[]).map(item => (
                               <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
                                 <div>
                                   <h3 className="font-medium">{item.course}</h3>
@@ -176,7 +205,7 @@ const Attendance = () => {
                         <>
                           <TabsContent value="present">
                             <div className="space-y-4">
-                              {filteredData
+                              {(filteredData as StudentAttendanceItem[])
                                 .filter(item => item.status === "present")
                                 .map(item => (
                                   <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
@@ -192,7 +221,7 @@ const Attendance = () => {
                           
                           <TabsContent value="absent">
                             <div className="space-y-4">
-                              {filteredData
+                              {(filteredData as StudentAttendanceItem[])
                                 .filter(item => item.status === "absent")
                                 .map(item => (
                                   <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
@@ -208,7 +237,7 @@ const Attendance = () => {
                           
                           <TabsContent value="late">
                             <div className="space-y-4">
-                              {filteredData
+                              {(filteredData as StudentAttendanceItem[])
                                 .filter(item => item.status === "late")
                                 .map(item => (
                                   <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
@@ -227,19 +256,35 @@ const Attendance = () => {
                       {(role === "teacher" || role === "admin") && (
                         <TabsContent value="today">
                           <div className="space-y-4">
-                            {filteredData
-                              .filter(item => item.date === new Date().toISOString().split('T')[0])
-                              .map(item => (
-                                <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
-                                  <div>
-                                    <h3 className="font-medium">{item.course}</h3>
-                                    <p className="text-sm text-muted-foreground">
-                                      {role === "admin" && `${item.instructor} • `}{item.time} • {item.room} • {item.students} students
-                                    </p>
+                            {role === "teacher" ? 
+                              (filteredData as TeacherClassItem[])
+                                .filter(item => item.date === new Date().toISOString().split('T')[0])
+                                .map(item => (
+                                  <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                                    <div>
+                                      <h3 className="font-medium">{item.course}</h3>
+                                      <p className="text-sm text-muted-foreground">
+                                        {item.time} • {item.room} • {item.students} students
+                                      </p>
+                                    </div>
+                                    <Button size="sm">Take Attendance</Button>
                                   </div>
-                                  <Button size="sm">{role === "teacher" ? "Take Attendance" : "View Details"}</Button>
-                                </div>
-                              ))}
+                                ))
+                             : 
+                              (filteredData as AdminClassItem[])
+                                .filter(item => item.date === new Date().toISOString().split('T')[0])
+                                .map(item => (
+                                  <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                                    <div>
+                                      <h3 className="font-medium">{item.course}</h3>
+                                      <p className="text-sm text-muted-foreground">
+                                        {item.instructor} • {item.time} • {item.room} • {item.students} students
+                                      </p>
+                                    </div>
+                                    <Button size="sm">View Details</Button>
+                                  </div>
+                                ))
+                            }
                           </div>
                         </TabsContent>
                       )}

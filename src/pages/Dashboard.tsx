@@ -9,21 +9,35 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, Calendar, ClipboardList, Clock, GraduationCap, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const studentStats = [
+type StatItemNumber = {
+  title: string;
+  value: number;
+  icon: React.ForwardRefExoticComponent<any>;
+};
+
+type StatItemString = {
+  title: string;
+  value: string;
+  icon: React.ForwardRefExoticComponent<any>;
+};
+
+type StatItem = StatItemNumber | StatItemString;
+
+const studentStats: StatItem[] = [
   { title: "Courses Enrolled", value: 6, icon: BookOpen },
   { title: "Assignments Due", value: 3, icon: ClipboardList },
   { title: "Attendance Rate", value: "92%", icon: Calendar },
   { title: "GPA", value: "3.8", icon: GraduationCap },
 ];
 
-const teacherStats = [
+const teacherStats: StatItem[] = [
   { title: "Courses Teaching", value: 4, icon: BookOpen },
   { title: "Total Students", value: 120, icon: Users },
   { title: "Classes Today", value: 3, icon: Clock },
   { title: "Average Attendance", value: "88%", icon: Calendar },
 ];
 
-const adminStats = [
+const adminStats: StatItem[] = [
   { title: "Total Students", value: 1250, icon: GraduationCap },
   { title: "Total Teachers", value: 75, icon: Users },
   { title: "Active Courses", value: 48, icon: BookOpen },
@@ -44,11 +58,13 @@ const recentAnnouncements = [
 
 const Dashboard = () => {
   // For demo purposes, we'll use "admin" role
-  const role: "admin" | "teacher" | "student" = "admin";
+  const userRole = "admin" as const;
+  type UserRole = "admin" | "teacher" | "student";
+  const role: UserRole = userRole;
   const userName = "John Doe";
 
   // Select the appropriate stats based on role
-  let stats = adminStats;
+  let stats: StatItem[] = adminStats;
   if (role === "student") {
     stats = studentStats;
   } else if (role === "teacher") {

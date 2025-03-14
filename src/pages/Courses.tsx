@@ -1,5 +1,4 @@
 
-// Let's create a separate component for the admin-specific course content
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import PageTransition from "@/components/PageTransition";
@@ -80,7 +79,9 @@ const courses = [
 const Courses = () => {
   const [searchQuery, setSearchQuery] = useState("");
   // For demo purposes, we'll use "admin" role
-  const role: "admin" | "teacher" | "student" = "admin";
+  const userRole = "admin" as const;
+  type UserRole = "admin" | "teacher" | "student";
+  const role: UserRole = userRole;
   const userName = "John Doe";
   
   // Filter courses based on search query

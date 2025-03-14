@@ -153,7 +153,6 @@ const Login = () => {
                       <Input 
                         id="password" 
                         type="password" 
-                        type="password" 
                         required 
                         value={formData.password}
                         onChange={handleChange}
