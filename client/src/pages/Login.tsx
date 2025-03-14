@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,8 +9,13 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+<<<<<<< HEAD
 import { authService } from "@/services/authService";
 import { useUser } from "@/contexts/UserContext";
+=======
+import { loginUser, registerUser } from "@/utils/authService";
+import { UserRole } from "@/types";
+>>>>>>> c81ff8dbb8ae1fe1c3770fc3442c00e540f4346a
 
 interface FormData {
   email: string;
@@ -20,7 +26,7 @@ interface FormData {
 }
 
 const Login = () => {
-  const [role, setRole] = useState<"admin" | "teacher" | "student">("student");
+  const [role, setRole] = useState<UserRole>("student");
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     email: "",
