@@ -1,149 +1,299 @@
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext';
+import {
+  BookOpen,
+  Building2,
+  Calendar,
+  ChevronDown,
+  FileText,
+  GraduationCap,
+  Home,
+  LogOut,
+  MessageSquare,
+  PieChart,
+  Settings,
+  User,
+  Users,
+} from 'lucide-react';
 
-import { cn } from "@/lib/utils";
-import { BookOpen, Calendar, GraduationCap, Home, LayoutDashboard, LogOut, Settings, User, Users } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
-import RoleIndicator from "./RoleIndicator";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
-
-type Role = "admin" | "teacher" | "student";
-
-interface SidebarProps {
-  role: Role;
-  userName: string;
-}
-
-type NavItem = {
-  name: string;
-  href: string;
-  icon: React.ElementType;
-  roles: Role[];
-};
-
-const navigation: NavItem[] = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["admin", "teacher", "student"] },
-  { name: "Courses", href: "/courses", icon: BookOpen, roles: ["admin", "teacher", "student"] },
-  { name: "Attendance", href: "/attendance", icon: Calendar, roles: ["admin", "teacher", "student"] },
-  { name: "Students", href: "/students", icon: GraduationCap, roles: ["admin", "teacher"] },
-  { name: "Teachers", href: "/teachers", icon: Users, roles: ["admin"] },
-  { name: "Profile", href: "/profile", icon: User, roles: ["admin", "teacher", "student"] },
-  { name: "Settings", href: "/settings", icon: Settings, roles: ["admin", "teacher", "student"] },
-];
-
-const Sidebar = ({ role, userName }: SidebarProps) => {
+const Sidebar = () => {
+  const { user, logout } = useUser();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
 
-  const toggleSidebar = () => {
-    setCollapsed(!collapsed);
+  const isActive = (path: string) => {
+    // Check if the current path starts with the given path
+    // This handles nested routes like /admin/dashboard
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
+  const handleLogout = () => {
+    logout();
+  };
+
+  // Determine dashboard base path based on user role
+  const getDashboardPath = () => {
+    if (!user) return '/dashboard';
+
+    switch (user.role) {
+      case 'admin':
+        return '/admin/dashboard';
+      case 'teacher':
+        return '/teacher/dashboard';
+      case 'student':
+      default:
+        return '/dashboard';
+    }
   };
 
   return (
-    <div 
-      className={cn(
-        "h-screen sticky top-0 flex flex-col bg-card border-r transition-all duration-300",
-        collapsed ? "w-20" : "w-64"
-      )}
-    >
-      <div className="flex items-center p-4 h-16">
-        {!collapsed && (
-          <Link to="/" className="flex items-center space-x-2">
-            <GraduationCap className="h-6 w-6 text-primary" />
-            <span className="font-bold text-lg">EduSync</span>
-          </Link>
-        )}
-        {collapsed && (
-          <Link to="/" className="flex items-center justify-center w-full">
-            <GraduationCap className="h-6 w-6 text-primary" />
-          </Link>
-        )}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className={cn(
-            "ml-auto",
-            collapsed && "mx-auto"
-          )} 
-          onClick={toggleSidebar}
-        >
-          {collapsed ? (
-            <svg className="h-5 w-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-            </svg>
-          ) : (
-            <svg className="h-5 w-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 19l-7-7 7-7M19 19l-7-7 7-7" />
-            </svg>
-          )}
-        </Button>
+    <div className="fixed left-0 top-0 h-screen w-64 bg-white shadow-lg">
+      <div className="flex h-16 items-center justify-center border-b">
+        <Link to={getDashboardPath()} className="flex items-center space-x-2">
+          <GraduationCap className="h-6 w-6 text-blue-600" />
+          <h1 className="text-xl font-bold text-blue-600">SCMS</h1>
+        </Link>
       </div>
-      
-      <Separator />
-      
-      <div className="flex flex-col justify-between flex-1 overflow-y-auto py-4">
-        <nav className="space-y-1 px-2">
-          {navigation
-            .filter(item => item.roles.includes(role))
-            .map(item => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={cn(
-                    "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-foreground hover:bg-muted",
-                    collapsed && "justify-center"
-                  )}
-                >
-                  <item.icon className={cn(
-                    "mr-3 h-5 w-5 flex-shrink-0",
-                    isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground",
-                    collapsed && "mr-0"
-                  )} 
-                  aria-hidden="true" 
-                  />
-                  {!collapsed && <span>{item.name}</span>}
-                </Link>
-              );
-            })}
-        </nav>
-        
-        <div className="px-2 space-y-2">
-          <Separator />
-          {!collapsed && (
-            <div className="px-2 py-2">
-              <div className="flex items-center space-x-2">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="h-4 w-4 text-primary" />
+
+      <div className="p-4">
+
+        <nav className="space-y-1">
+          {/* Student Navigation */}
+          {user?.role === 'student' && (
+            <>
+              <Link
+                to="/dashboard"
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/dashboard')
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <Home className="h-5 w-5" />
+                <span>Dashboard</span>
+              </Link>
+
+              <Link
+                to="/courses"
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/courses')
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <BookOpen className="h-5 w-5" />
+                <span>Courses</span>
+              </Link>
+
+              <Link
+                to="/attendance"
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/attendance')
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <Calendar className="h-5 w-5" />
+                <span>Attendance</span>
+              </Link>
+
+              <Link
+                to="/profile"
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/profile')
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <User className="h-5 w-5" />
+                <span>Profile</span>
+              </Link>
+            </>
+          )}
+
+          {/* Teacher Navigation */}
+          {user?.role === 'teacher' && (
+            <>
+              <Link
+                to="/teacher/dashboard"
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/teacher/dashboard')
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <Home className="h-5 w-5" />
+                <span>Dashboard</span>
+              </Link>
+
+              <Link
+                to="/teacher/schedule"
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/teacher/schedule')
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <Calendar className="h-5 w-5" />
+                <span>Schedule</span>
+              </Link>
+
+              <Link
+                to="/teacher/assignments"
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/teacher/assignments')
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <FileText className="h-5 w-5" />
+                <span>Assignments</span>
+              </Link>
+
+              <Link
+                to="/teacher/courses"
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/teacher/courses')
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <BookOpen className="h-5 w-5" />
+                <span>Courses</span>
+              </Link>
+
+              <Link
+                to="/teacher/messages"
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/teacher/messages')
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <MessageSquare className="h-5 w-5" />
+                <span>Messages</span>
+              </Link>
+
+              <Link
+                to="/profile"
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/profile')
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <User className="h-5 w-5" />
+                <span>Profile</span>
+              </Link>
+            </>
+          )}
+
+          {/* Admin Navigation */}
+          {user?.role === 'admin' && (
+            <>
+              <Link
+                to="/admin/dashboard"
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/admin/dashboard')
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <Home className="h-5 w-5" />
+                <span>Dashboard</span>
+              </Link>
+
+              <Link
+                to="/admin/students"
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/admin/students')
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <Users className="h-5 w-5" />
+                <span>Students</span>
+              </Link>
+
+              <Link
+                to="/admin/teachers"
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/admin/teachers')
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <Users className="h-5 w-5" />
+                <span>Teachers</span>
+              </Link>
+
+              <Link
+                to="/admin/departments"
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/admin/departments')
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <Building2 className="h-5 w-5" />
+                <span>Departments</span>
+              </Link>
+
+              <Link
+                to="/admin/schedule"
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/admin/schedule')
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <Calendar className="h-5 w-5" />
+                <span>Schedule</span>
+              </Link>
+
+              <Link
+                to="/admin/reports"
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/admin/reports')
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <PieChart className="h-5 w-5" />
+                <span>Reports</span>
+              </Link>
+
+              <Link
+                to="/admin/settings"
+                className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/admin/settings')
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <Settings className="h-5 w-5" />
+                <span>Settings</span>
+              </Link>
+            </>
+          )}
+
+          {/* Common links for all users */}
+          <Link
+            to="/profile"
+            className={`flex items-center space-x-3 rounded-lg px-3 py-2 ${isActive('/profile')
+              ? 'bg-blue-600 text-white'
+              : 'text-gray-600 hover:bg-gray-100'
+              }`}
+          >
+            <User className="h-5 w-5" />
+            <span>Profile</span>
+          </Link>
+
+          <div className='absolute bottom-0 left-0 right-0'>
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center space-x-3 rounded-lg px-3 py-2 text-gray-600 hover:bg-gray-100"
+            >
+              <LogOut className="h-5 w-5" />
+              <span>Logout</span>
+            </button>
+            <div className="mb-6">
+              <div className="flex items-center space-x-3 rounded-lg bg-gray-100 p-3">
+                <div className="h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                  {user?.name?.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-sm font-medium">{userName}</p>
-                  <RoleIndicator role={role} className="mt-1" />
+                  <p className="font-medium">{user?.name}</p>
+                  <p className="text-sm text-gray-500 capitalize">{user?.role}</p>
                 </div>
               </div>
             </div>
-          )}
-          <Link
-            to="/login"
-            className={cn(
-              "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors text-foreground hover:bg-muted",
-              collapsed && "justify-center"
-            )}
-          >
-            <LogOut
-              className={cn(
-                "mr-3 h-5 w-5 flex-shrink-0 text-muted-foreground group-hover:text-foreground",
-                collapsed && "mr-0"
-              )}
-              aria-hidden="true"
-            />
-            {!collapsed && <span>Logout</span>}
-          </Link>
-        </div>
+            
+          </div>
+        </nav>
       </div>
     </div>
   );

@@ -4,17 +4,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GraduationCap } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { loginUser, registerUser } from "@/utils/authService";
+import { authService } from "@/services/authService";
+import { useUser } from "@/contexts/UserContext";
 
 interface FormData {
   email: string;
   password: string;
   firstName?: string;
   lastName?: string;
+  department?: string;
 }
 
 const Login = () => {
@@ -25,8 +27,17 @@ const Login = () => {
     password: "",
     firstName: "",
     lastName: "",
+    department: "Computer Science", // Default department
   });
   const navigate = useNavigate();
+  const { refreshProfile } = useUser();
+
+  // Update department when role changes
+  useEffect(() => {
+    if (role === 'admin') {
+      setFormData(prev => ({ ...prev, department: "Administration" }));
+    }
+  }, [role]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -39,28 +50,43 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
-      const response = await loginUser(formData.email, formData.password);
+      const response = await authService.login({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      // The token is already stored in localStorage and userService by authService.login
+      console.log('Login successful, refreshing profile...');
+
+      // Refresh the user profile to update the UserContext
+      await refreshProfile();
+      console.log('Profile refreshed, redirecting...');
+
       toast.success(`Logged in successfully as ${response.user.role}`);
-      
+
       // Redirect based on role
       switch (response.user.role) {
         case "admin":
-          navigate("/admin/dashboard");
+          navigate("/admin/dashboard", { replace: true });
           break;
         case "teacher":
-          navigate("/teacher/dashboard");
+          navigate("/teacher/dashboard", { replace: true });
           break;
         case "student":
-          navigate("/dashboard");
+          navigate("/dashboard", { replace: true });
           break;
         default:
-          navigate("/dashboard");
+          navigate("/dashboard", { replace: true });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Login error:", error);
-      toast.error(error.response?.data?.message || "Failed to login. Please try again.");
+      if (error instanceof Error) {
+        toast.error(error.message || "Failed to login. Please try again.");
+      } else {
+        toast.error("Failed to login. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -69,7 +95,7 @@ const Login = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       // Validate form data
       if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
@@ -77,23 +103,41 @@ const Login = () => {
         setLoading(false);
         return;
       }
-      
+
+      // For students and teachers, validate department
+      if ((role === 'student' || role === 'teacher') && !formData.department) {
+        toast.error("Please select a department");
+        setLoading(false);
+        return;
+      }
+
       const userData = {
+        name: `${formData.firstName} ${formData.lastName}`,
         email: formData.email,
         password: formData.password,
-        firstName: formData.firstName || "",
-        lastName: formData.lastName || "",
-        role
+        role,
+        department: formData.department
       };
-      
-      const response = await registerUser(userData);
-      toast.success("Account created successfully!");
-      
+
+      await authService.register(userData);
+
+      toast.success("Account created successfully! Please login.");
+
+      // Clear password field for security
+      setFormData(prev => ({
+        ...prev,
+        password: ""
+      }));
+
       // Switch to login tab after successful signup
       document.getElementById("signin-trigger")?.click();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Signup error:", error);
-      toast.error(error.response?.data?.message || "Failed to create account. Please try again.");
+      if (error instanceof Error) {
+        toast.error(error.message || "Failed to create account. Please try again.");
+      } else {
+        toast.error("Failed to create account. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -110,7 +154,7 @@ const Login = () => {
           <div className="text-center mb-6">
             <Link to="/" className="inline-flex items-center space-x-2">
               <GraduationCap className="h-8 w-8 text-primary" />
-              <span className="font-bold text-2xl">EduSync</span>
+              <span className="font-bold text-2xl">SCMS</span>
             </Link>
             <h1 className="text-2xl font-bold mt-4">Welcome back</h1>
             <p className="text-muted-foreground">Sign in to your account</p>
@@ -134,11 +178,11 @@ const Login = () => {
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <Input 
-                        id="email" 
-                        type="email" 
-                        placeholder="m@example.com" 
-                        required 
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="m@example.com"
+                        required
                         value={formData.email}
                         onChange={handleChange}
                       />
@@ -150,10 +194,10 @@ const Login = () => {
                           Forgot password?
                         </Link>
                       </div>
-                      <Input 
-                        id="password" 
-                        type="password" 
-                        required 
+                      <Input
+                        id="password"
+                        type="password"
+                        required
                         value={formData.password}
                         onChange={handleChange}
                       />
@@ -195,40 +239,54 @@ const Login = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="firstName">First name</Label>
-                        <Input 
-                          id="firstName" 
-                          required 
+                        <Input
+                          id="firstName"
+                          required
                           value={formData.firstName}
                           onChange={handleChange}
                         />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="lastName">Last name</Label>
-                        <Input 
-                          id="lastName" 
-                          required 
+                        <Input
+                          id="lastName"
+                          required
                           value={formData.lastName}
                           onChange={handleChange}
                         />
                       </div>
                     </div>
+
+                    {(role === 'student' || role === 'teacher') && (
+                      <div className="space-y-2">
+                        <Label htmlFor="department">Department</Label>
+                        <Input
+                          id="department"
+                          required
+                          value={formData.department}
+                          onChange={handleChange}
+                          placeholder="e.g., Computer Science"
+                        />
+                      </div>
+                    )}
+
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <Input 
-                        id="email" 
-                        type="email" 
-                        placeholder="m@example.com" 
-                        required 
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="m@example.com"
+                        required
                         value={formData.email}
                         onChange={handleChange}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password">Password</Label>
-                      <Input 
-                        id="password" 
-                        type="password" 
-                        required 
+                      <Input
+                        id="password"
+                        type="password"
+                        required
                         value={formData.password}
                         onChange={handleChange}
                       />
