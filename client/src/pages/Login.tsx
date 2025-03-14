@@ -9,13 +9,9 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-<<<<<<< HEAD
 import { authService } from "@/services/authService";
 import { useUser } from "@/contexts/UserContext";
-=======
-import { loginUser, registerUser } from "@/utils/authService";
 import { UserRole } from "@/types";
->>>>>>> c81ff8dbb8ae1fe1c3770fc3442c00e540f4346a
 
 interface FormData {
   email: string;
