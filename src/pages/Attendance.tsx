@@ -1,58 +1,85 @@
 
-import AttendanceCard from "@/components/AttendanceCard";
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import PageTransition from "@/components/PageTransition";
 import Sidebar from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calendar, CheckSquare, Circle, Clock, Download, Filter, HelpCircle, XSquare } from "lucide-react";
-import { useState } from "react";
+import { Check, Clock, Search, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 // Sample attendance data
-const attendanceData = [
-  { id: 1, courseName: "Introduction to Computer Science", date: "Nov 22, 2023", status: "present", percentage: 92 },
-  { id: 2, courseName: "Calculus II", date: "Nov 21, 2023", status: "absent", percentage: 85 },
-  { id: 3, courseName: "Modern Literature", date: "Nov 20, 2023", status: "present", percentage: 95 },
-  { id: 4, courseName: "Physics 101", date: "Nov 20, 2023", status: "late", percentage: 90 },
-  { id: 5, courseName: "Introduction to Computer Science", date: "Nov 15, 2023", status: "present", percentage: 92 },
-  { id: 6, courseName: "Calculus II", date: "Nov 14, 2023", status: "present", percentage: 85 },
-  { id: 7, courseName: "Modern Literature", date: "Nov 13, 2023", status: "late", percentage: 95 },
-  { id: 8, courseName: "Physics 101", date: "Nov 13, 2023", status: "present", percentage: 90 },
+const studentAttendance = [
+  { id: 1, course: "Introduction to Computer Science", date: "2023-11-15", status: "present" },
+  { id: 2, course: "Calculus II", date: "2023-11-15", status: "present" },
+  { id: 3, course: "Modern Literature", date: "2023-11-15", status: "absent" },
+  { id: 4, course: "Introduction to Computer Science", date: "2023-11-14", status: "present" },
+  { id: 5, course: "Calculus II", date: "2023-11-14", status: "late" },
+  { id: 6, course: "Modern Literature", date: "2023-11-14", status: "present" },
 ];
 
-// Sample attendance summary data
-const attendanceSummary = [
-  { courseName: "Introduction to Computer Science", present: 24, absent: 2, late: 1, total: 27 },
-  { courseName: "Calculus II", present: 18, absent: 3, late: 2, total: 23 },
-  { courseName: "Modern Literature", present: 20, absent: 1, late: 1, total: 22 },
-  { courseName: "Physics 101", present: 19, absent: 2, late: 0, total: 21 },
+// Sample class data for teachers
+const teacherClasses = [
+  { id: 1, course: "Introduction to Computer Science", time: "10:00 AM - 11:30 AM", room: "Hall 302", students: 35, date: "2023-11-15" },
+  { id: 2, course: "Advanced Programming", time: "1:00 PM - 2:30 PM", room: "Tech Building 101", students: 28, date: "2023-11-15" },
+  { id: 3, course: "Data Structures", time: "3:00 PM - 4:30 PM", room: "CS Lab 204", students: 22, date: "2023-11-15" },
+  { id: 4, course: "Introduction to Computer Science", time: "10:00 AM - 11:30 AM", room: "Hall 302", students: 35, date: "2023-11-14" },
+  { id: 5, course: "Advanced Programming", time: "1:00 PM - 2:30 PM", room: "Tech Building 101", students: 28, date: "2023-11-14" },
 ];
 
-const calculatePercentage = (value: number, total: number) => {
-  return Math.round((value / total) * 100);
-};
+// Sample class data for admin view
+const allClasses = [
+  { id: 1, course: "Introduction to Computer Science", instructor: "Dr. Alan Turing", time: "10:00 AM - 11:30 AM", room: "Hall 302", students: 35, date: "2023-11-15" },
+  { id: 2, course: "Calculus II", instructor: "Dr. Katherine Johnson", time: "1:00 PM - 2:30 PM", room: "Math Building 101", students: 28, date: "2023-11-15" },
+  { id: 3, course: "Modern Literature", instructor: "Prof. Maya Angelou", time: "3:00 PM - 4:30 PM", room: "Arts 204", students: 22, date: "2023-11-15" },
+  { id: 4, course: "Physics 101", instructor: "Dr. Richard Feynman", time: "10:00 AM - 11:30 AM", room: "Physics Lab 302", students: 30, date: "2023-11-15" },
+  { id: 5, course: "Organic Chemistry", instructor: "Dr. Marie Curie", time: "1:00 PM - 2:30 PM", room: "Chemistry Building 101", students: 25, date: "2023-11-15" },
+];
 
 const Attendance = () => {
-  // For demo purposes, we'll use "student" role
-  const role: "admin" | "teacher" | "student" = "student";
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // For demo purposes, we'll use "admin" role
+  const role: "admin" | "teacher" | "student" = "admin";
   const userName = "John Doe";
-  
-  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
-  
-  // Get unique course names for filter
-  const courseNames = Array.from(new Set(attendanceData.map(item => item.courseName)));
-  
-  // Filter attendance data
-  const filteredData = attendanceData.filter(item => {
-    const matchesCourse = !selectedCourse || item.courseName === selectedCourse;
-    const matchesStatus = !selectedStatus || item.status === selectedStatus;
-    return matchesCourse && matchesStatus;
-  });
+
+  // Filter data based on search query
+  const getFilteredData = () => {
+    if (role === "student") {
+      return studentAttendance.filter(item => 
+        item.course.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    } else if (role === "teacher") {
+      return teacherClasses.filter(item => 
+        item.course.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    } else {
+      return allClasses.filter(item => 
+        item.course.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.instructor && item.instructor.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    }
+  };
+
+  const filteredData = getFilteredData();
+
+  // Status badge color
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "present":
+        return <Badge className="bg-green-100 text-green-800 border-green-300">Present</Badge>;
+      case "absent":
+        return <Badge className="bg-red-100 text-red-800 border-red-300">Absent</Badge>;
+      case "late":
+        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">Late</Badge>;
+      default:
+        return <Badge>Unknown</Badge>;
+    }
+  };
 
   return (
     <div className="min-h-screen flex">
@@ -64,202 +91,232 @@ const Attendance = () => {
         <PageTransition>
           <div className="p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-              <div>
-                <h1 className="text-2xl font-bold">Attendance</h1>
-                <p className="text-muted-foreground">Track and manage attendance records</p>
+              <h1 className="text-2xl font-bold">Attendance</h1>
+              
+              <div className="mt-3 sm:mt-0 flex items-center space-x-2">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Search..."
+                    className="w-full pl-8 pr-4"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
               </div>
-              
-              {role === "teacher" && (
-                <Button className="mt-3 sm:mt-0">
-                  <CheckSquare className="mr-2 h-4 w-4" />
-                  Take Attendance
-                </Button>
-              )}
-              
-              {role === "admin" && (
-                <Button className="mt-3 sm:mt-0">
-                  <Download className="mr-2 h-4 w-4" />
-                  Export Records
-                </Button>
-              )}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-              <Card className="lg:col-span-2">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Overall Attendance</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    {attendanceSummary.map((course, index) => {
-                      const presentPercentage = calculatePercentage(course.present, course.total);
-                      const absentPercentage = calculatePercentage(course.absent, course.total);
-                      const latePercentage = calculatePercentage(course.late, course.total);
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{role === "student" ? "My Attendance" : "Class Attendance"}</CardTitle>
+                    <CardDescription>
+                      {role === "student" ? "Track your class attendance" : "Manage attendance for your classes"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Tabs defaultValue="all" className="w-full">
+                      <TabsList className="mb-4">
+                        <TabsTrigger value="all">All</TabsTrigger>
+                        {role === "student" && (
+                          <>
+                            <TabsTrigger value="present">Present</TabsTrigger>
+                            <TabsTrigger value="absent">Absent</TabsTrigger>
+                            <TabsTrigger value="late">Late</TabsTrigger>
+                          </>
+                        )}
+                        {(role === "teacher" || role === "admin") && (
+                          <TabsTrigger value="today">Today's Classes</TabsTrigger>
+                        )}
+                      </TabsList>
                       
-                      return (
-                        <div key={index} className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <div className="font-medium text-sm">{course.courseName}</div>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                                </TooltipTrigger>
-                                <TooltipContent className="p-2">
-                                  <div className="text-xs space-y-1">
-                                    <div>Present: {course.present} days</div>
-                                    <div>Absent: {course.absent} days</div>
-                                    <div>Late: {course.late} days</div>
-                                    <div>Total Classes: {course.total}</div>
-                                  </div>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </div>
-                          <div className="flex h-2 overflow-hidden rounded bg-gray-100 dark:bg-gray-800">
-                            <div 
-                              className="bg-green-500" 
-                              style={{ width: `${presentPercentage}%` }} 
-                            />
-                            <div 
-                              className="bg-yellow-500" 
-                              style={{ width: `${latePercentage}%` }} 
-                            />
-                            <div 
-                              className="bg-red-500" 
-                              style={{ width: `${absentPercentage}%` }} 
-                            />
-                          </div>
-                          <div className="flex text-xs">
-                            <div className="flex items-center mr-4">
-                              <div className="h-2 w-2 rounded-full bg-green-500 mr-1" />
-                              <span>Present ({presentPercentage}%)</span>
-                            </div>
-                            <div className="flex items-center mr-4">
-                              <div className="h-2 w-2 rounded-full bg-yellow-500 mr-1" />
-                              <span>Late ({latePercentage}%)</span>
-                            </div>
-                            <div className="flex items-center">
-                              <div className="h-2 w-2 rounded-full bg-red-500 mr-1" />
-                              <span>Absent ({absentPercentage}%)</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Today's Classes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {[
-                      { course: "Introduction to Computer Science", time: "10:00 AM", status: "completed" },
-                      { course: "Calculus II", time: "1:00 PM", status: "upcoming" },
-                      { course: "Modern Literature", time: "3:00 PM", status: "upcoming" },
-                    ].map((cls, index) => (
-                      <div key={index} className="flex items-center p-3 rounded-md border bg-card">
-                        <div className="mr-3">
-                          {cls.status === "completed" ? (
-                            <Circle className="h-3 w-3 fill-green-500 text-green-500" />
+                      <TabsContent value="all">
+                        <div className="space-y-4">
+                          {role === "student" ? (
+                            filteredData.map(item => (
+                              <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                                <div>
+                                  <h3 className="font-medium">{item.course}</h3>
+                                  <p className="text-sm text-muted-foreground">{new Date(item.date).toLocaleDateString()}</p>
+                                </div>
+                                {getStatusBadge(item.status)}
+                              </div>
+                            ))
+                          ) : role === "teacher" ? (
+                            filteredData.map(item => (
+                              <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                                <div>
+                                  <h3 className="font-medium">{item.course}</h3>
+                                  <p className="text-sm text-muted-foreground">
+                                    {item.time} • {item.room} • {item.students} students
+                                  </p>
+                                </div>
+                                <Button size="sm" variant="outline">Take Attendance</Button>
+                              </div>
+                            ))
                           ) : (
-                            <Circle className="h-3 w-3 text-muted-foreground" />
+                            filteredData.map(item => (
+                              <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                                <div>
+                                  <h3 className="font-medium">{item.course}</h3>
+                                  <p className="text-sm text-muted-foreground">
+                                    {item.instructor} • {item.time} • {item.room} • {item.students} students
+                                  </p>
+                                </div>
+                                <Button size="sm" variant="outline">View Details</Button>
+                              </div>
+                            ))
                           )}
                         </div>
-                        <div>
-                          <div className="font-medium text-sm">{cls.course}</div>
-                          <div className="text-xs flex items-center text-muted-foreground">
-                            <Clock className="h-3 w-3 mr-1" />
-                            {cls.time}
+                      </TabsContent>
+                      
+                      {role === "student" && (
+                        <>
+                          <TabsContent value="present">
+                            <div className="space-y-4">
+                              {filteredData
+                                .filter(item => item.status === "present")
+                                .map(item => (
+                                  <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                                    <div>
+                                      <h3 className="font-medium">{item.course}</h3>
+                                      <p className="text-sm text-muted-foreground">{new Date(item.date).toLocaleDateString()}</p>
+                                    </div>
+                                    <Check className="h-5 w-5 text-green-500" />
+                                  </div>
+                                ))}
+                            </div>
+                          </TabsContent>
+                          
+                          <TabsContent value="absent">
+                            <div className="space-y-4">
+                              {filteredData
+                                .filter(item => item.status === "absent")
+                                .map(item => (
+                                  <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                                    <div>
+                                      <h3 className="font-medium">{item.course}</h3>
+                                      <p className="text-sm text-muted-foreground">{new Date(item.date).toLocaleDateString()}</p>
+                                    </div>
+                                    <X className="h-5 w-5 text-red-500" />
+                                  </div>
+                                ))}
+                            </div>
+                          </TabsContent>
+                          
+                          <TabsContent value="late">
+                            <div className="space-y-4">
+                              {filteredData
+                                .filter(item => item.status === "late")
+                                .map(item => (
+                                  <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                                    <div>
+                                      <h3 className="font-medium">{item.course}</h3>
+                                      <p className="text-sm text-muted-foreground">{new Date(item.date).toLocaleDateString()}</p>
+                                    </div>
+                                    <Clock className="h-5 w-5 text-yellow-500" />
+                                  </div>
+                                ))}
+                            </div>
+                          </TabsContent>
+                        </>
+                      )}
+                      
+                      {(role === "teacher" || role === "admin") && (
+                        <TabsContent value="today">
+                          <div className="space-y-4">
+                            {filteredData
+                              .filter(item => item.date === new Date().toISOString().split('T')[0])
+                              .map(item => (
+                                <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                                  <div>
+                                    <h3 className="font-medium">{item.course}</h3>
+                                    <p className="text-sm text-muted-foreground">
+                                      {role === "admin" && `${item.instructor} • `}{item.time} • {item.room} • {item.students} students
+                                    </p>
+                                  </div>
+                                  <Button size="sm">{role === "teacher" ? "Take Attendance" : "View Details"}</Button>
+                                </div>
+                              ))}
+                          </div>
+                        </TabsContent>
+                      )}
+                    </Tabs>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Calendar</CardTitle>
+                    <CardDescription>View and select dates</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      className="rounded-md border"
+                    />
+                    
+                    {role === "student" && (
+                      <div className="mt-6">
+                        <h3 className="font-medium mb-2">Attendance Summary</h3>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="p-3 bg-green-50 rounded-lg text-center">
+                            <div className="text-2xl font-bold text-green-600">85%</div>
+                            <div className="text-xs text-green-800">Present</div>
+                          </div>
+                          <div className="p-3 bg-yellow-50 rounded-lg text-center">
+                            <div className="text-2xl font-bold text-yellow-600">10%</div>
+                            <div className="text-xs text-yellow-800">Late</div>
+                          </div>
+                          <div className="p-3 bg-red-50 rounded-lg text-center">
+                            <div className="text-2xl font-bold text-red-600">5%</div>
+                            <div className="text-xs text-red-800">Absent</div>
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                  <CardTitle className="text-lg">Attendance Records</CardTitle>
-                  
-                  <div className="flex flex-col sm:flex-row gap-3 mt-3 sm:mt-0">
-                    <Select
-                      value={selectedCourse || ""}
-                      onValueChange={(value) => setSelectedCourse(value || null)}
-                    >
-                      <SelectTrigger className="w-full sm:w-40">
-                        <div className="flex items-center">
-                          <Filter className="mr-2 h-4 w-4" />
-                          <SelectValue placeholder="All Courses" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">All Courses</SelectItem>
-                        {courseNames.map(course => (
-                          <SelectItem key={course} value={course}>{course}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    )}
                     
-                    <Select
-                      value={selectedStatus || ""}
-                      onValueChange={(value) => setSelectedStatus(value || null)}
-                    >
-                      <SelectTrigger className="w-full sm:w-36">
-                        <div className="flex items-center">
-                          <Calendar className="mr-2 h-4 w-4" />
-                          <SelectValue placeholder="All Statuses" />
+                    {role === "teacher" && (
+                      <div className="mt-6">
+                        <h3 className="font-medium mb-2">Classes Today</h3>
+                        <div className="space-y-2">
+                          {teacherClasses
+                            .filter(item => item.date === new Date().toISOString().split('T')[0])
+                            .map(item => (
+                              <div key={item.id} className="p-2 border rounded-lg">
+                                <div className="font-medium">{item.course}</div>
+                                <div className="text-xs text-muted-foreground">{item.time} • {item.room}</div>
+                              </div>
+                            ))}
                         </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">All Statuses</SelectItem>
-                        <SelectItem value="present">Present</SelectItem>
-                        <SelectItem value="absent">Absent</SelectItem>
-                        <SelectItem value="late">Late</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="list" className="w-full">
-                  <TabsList className="w-full max-w-xs grid grid-cols-2 mb-4">
-                    <TabsTrigger value="list">List View</TabsTrigger>
-                    <TabsTrigger value="calendar">Calendar View</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="list">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {filteredData.map((record) => (
-                        <AttendanceCard
-                          key={record.id}
-                          courseName={record.courseName}
-                          date={record.date}
-                          status={record.status as "present" | "absent" | "late"}
-                          percentage={record.percentage}
-                        />
-                      ))}
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="calendar">
-                    <div className="bg-card border rounded-lg p-6 min-h-[300px] flex items-center justify-center">
-                      <div className="text-center">
-                        <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-muted-foreground">Calendar view will be implemented in the next update.</p>
                       </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
+                    )}
+                    
+                    {role === "admin" && (
+                      <div className="mt-6">
+                        <h3 className="font-medium mb-2">Attendance Overview</h3>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Overall Attendance</span>
+                            <span className="font-medium">88%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2.5">
+                            <div className="bg-primary h-2.5 rounded-full" style={{ width: "88%" }}></div>
+                          </div>
+                          <Button size="sm" className="w-full" variant="outline">Generate Report</Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </div>
         </PageTransition>
       </main>

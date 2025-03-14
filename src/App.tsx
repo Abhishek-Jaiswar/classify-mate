@@ -11,6 +11,8 @@ import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
 import Attendance from "./pages/Attendance";
 import Profile from "./pages/Profile";
+import AdminDashboard from "./pages/AdminDashboard";
+import TeacherDashboard from "./pages/TeacherDashboard";
 import { AnimatePresence } from "framer-motion";
 
 const queryClient = new QueryClient();
@@ -29,6 +31,15 @@ const App = () => (
             <Route path="/courses" element={<Courses />} />
             <Route path="/attendance" element={<Attendance />} />
             <Route path="/profile" element={<Profile />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            
+            {/* Teacher Routes */}
+            <Route path="/teacher" element={<TeacherDashboard />} />
+            <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

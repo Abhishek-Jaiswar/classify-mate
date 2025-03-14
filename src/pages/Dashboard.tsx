@@ -48,11 +48,12 @@ const Dashboard = () => {
   const userName = "John Doe";
 
   // Select the appropriate stats based on role
-  const stats = role === "student" 
-    ? studentStats 
-    : role === "teacher" 
-      ? teacherStats 
-      : adminStats;
+  let stats = adminStats;
+  if (role === "student") {
+    stats = studentStats;
+  } else if (role === "teacher") {
+    stats = teacherStats;
+  }
 
   return (
     <div className="min-h-screen flex">
