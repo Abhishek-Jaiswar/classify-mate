@@ -1,192 +1,233 @@
 
-import DashboardCard from "@/components/DashboardCard";
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import PageTransition from "@/components/PageTransition";
 import Sidebar from "@/components/Sidebar";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Calendar, ClipboardList, Clock, GraduationCap, Users } from "lucide-react";
-import { Link } from "react-router-dom";
+import { BookOpen, BookOpenCheck, Calendar, Clock, GraduationCap, LineChart, Users, Infinity } from "lucide-react";
+import DashboardCard from "@/components/DashboardCard";
+import { UserRole } from "@/types";
 
-type StatItemNumber = {
+interface DashboardCardData {
   title: string;
-  value: number;
-  icon: React.ForwardRefExoticComponent<any>;
-};
+  value: number | string;
+  icon: React.FC<React.SVGProps<SVGSVGElement>>;
+}
 
-type StatItemString = {
-  title: string;
-  value: string;
-  icon: React.ForwardRefExoticComponent<any>;
-};
-
-type StatItem = StatItemNumber | StatItemString;
-
-const studentStats: StatItem[] = [
-  { title: "Courses Enrolled", value: 6, icon: BookOpen },
-  { title: "Assignments Due", value: 3, icon: ClipboardList },
-  { title: "Attendance Rate", value: "92%", icon: Calendar },
-  { title: "GPA", value: "3.8", icon: GraduationCap },
-];
-
-const teacherStats: StatItem[] = [
-  { title: "Courses Teaching", value: 4, icon: BookOpen },
-  { title: "Total Students", value: 120, icon: Users },
-  { title: "Classes Today", value: 3, icon: Clock },
-  { title: "Average Attendance", value: "88%", icon: Calendar },
-];
-
-const adminStats: StatItem[] = [
-  { title: "Total Students", value: 1250, icon: GraduationCap },
-  { title: "Total Teachers", value: 75, icon: Users },
-  { title: "Active Courses", value: 48, icon: BookOpen },
-  { title: "Departments", value: 6, icon: ClipboardList },
-];
-
+// Mock data for upcoming classes
 const upcomingClasses = [
-  { course: "Introduction to Computer Science", time: "10:00 AM - 11:30 AM", room: "Hall 302" },
-  { course: "Calculus II", time: "1:00 PM - 2:30 PM", room: "Math Building 101" },
-  { course: "Modern Literature", time: "3:00 PM - 4:30 PM", room: "Arts 204" },
+  {
+    id: 1,
+    course: "Introduction to Computer Science",
+    time: "10:00 AM - 11:30 AM",
+    room: "CS-101",
+  },
+  {
+    id: 2,
+    course: "Calculus II",
+    time: "01:00 PM - 02:30 PM",
+    room: "MA-201",
+  },
+  {
+    id: 3,
+    course: "Physics 101",
+    time: "03:00 PM - 04:30 PM",
+    room: "PH-101",
+  },
 ];
 
-const recentAnnouncements = [
-  { title: "Campus Closed for Holiday", date: "Nov 24, 2023", description: "The campus will be closed for the Thanksgiving holiday from November 24-26." },
-  { title: "Winter Registration Open", date: "Nov 15, 2023", description: "Registration for Winter semester courses is now open until December 15." },
-  { title: "Library Extended Hours", date: "Nov 10, 2023", description: "The main library will have extended hours during finals week." },
+// Mock data for recent activities
+const recentActivities = [
+  {
+    id: 1,
+    action: "Completed Assignment",
+    course: "Introduction to Computer Science",
+    date: "2 hours ago",
+  },
+  {
+    id: 2,
+    action: "Submitted Quiz",
+    course: "Calculus II",
+    date: "Yesterday",
+  },
+  {
+    id: 3,
+    action: "Joined Discussion",
+    course: "Modern Literature",
+    date: "2 days ago",
+  },
 ];
 
 const Dashboard = () => {
   // For demo purposes, we'll use "admin" role
-  const userRole = "admin" as const;
-  type UserRole = "admin" | "teacher" | "student";
-  const role: UserRole = userRole;
+  const userRole: UserRole = "admin";
   const userName = "John Doe";
-
-  // Select the appropriate stats based on role
-  let stats: StatItem[] = adminStats;
-  if (role === "student") {
-    stats = studentStats;
-  } else if (role === "teacher") {
-    stats = teacherStats;
-  }
+  
+  // Define dashboard cards based on role
+  const getDashboardCards = (): DashboardCardData[] => {
+    if (userRole === "student") {
+      return [
+        { title: "Courses", value: 5, icon: BookOpen },
+        { title: "Credits", value: 15, icon: Infinity },
+        { title: "Attendance", value: "95%", icon: Calendar },
+        { title: "Average Grade", value: "B+", icon: LineChart },
+      ];
+    } else if (userRole === "teacher") {
+      return [
+        { title: "Classes", value: 4, icon: BookOpenCheck },
+        { title: "Students", value: 120, icon: Users },
+        { title: "Attendance Rate", value: "92%", icon: Calendar },
+        { title: "Average Grade", value: "B", icon: LineChart },
+      ];
+    } else {
+      return [
+        { title: "Students", value: 1250, icon: GraduationCap },
+        { title: "Teachers", value: 75, icon: Users },
+        { title: "Courses", value: 120, icon: BookOpen },
+        { title: "Departments", value: 8, icon: BookOpenCheck },
+      ];
+    }
+  };
 
   return (
     <div className="min-h-screen flex">
-      <Sidebar role={role} userName={userName} />
+      <Sidebar role={userRole} userName={userName} />
       
       <main className="flex-1">
         <Navbar />
         
         <PageTransition>
           <div className="p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+            <div className="flex items-center justify-between mb-6">
               <h1 className="text-2xl font-bold">Dashboard</h1>
-              <div className="mt-3 sm:mt-0">
-                <Tabs defaultValue="daily" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="daily">Daily</TabsTrigger>
-                    <TabsTrigger value="weekly">Weekly</TabsTrigger>
-                    <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              {stats.map((stat, i) => (
-                <DashboardCard
-                  key={i}
-                  title={stat.title}
-                  icon={stat.icon}
-                >
-                  <div className="mt-2">
-                    <div className="text-3xl font-bold">{stat.value}</div>
-                  </div>
-                </DashboardCard>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+              {getDashboardCards().map((card, index) => (
+                <DashboardCard 
+                  key={index}
+                  title={card.title} 
+                  value={card.value.toString()}
+                  icon={card.icon}
+                />
               ))}
             </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-              <div className="lg:col-span-2">
-                <DashboardCard
-                  title="Performance Overview"
-                  description="Course completion progress for this semester"
-                >
-                  <div className="space-y-4 mt-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Introduction to Computer Science</span>
-                        <span className="font-medium">75%</span>
-                      </div>
-                      <Progress value={75} className="h-2" />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Calculus II</span>
-                        <span className="font-medium">60%</span>
-                      </div>
-                      <Progress value={60} className="h-2" />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Modern Literature</span>
-                        <span className="font-medium">90%</span>
-                      </div>
-                      <Progress value={90} className="h-2" />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Physics 101</span>
-                        <span className="font-medium">45%</span>
-                      </div>
-                      <Progress value={45} className="h-2" />
-                    </div>
-                  </div>
-                </DashboardCard>
-              </div>
-
-              <div>
-                <DashboardCard
-                  title="Upcoming Classes"
-                  description="Today's schedule"
-                  footer={
-                    <Button variant="ghost" size="sm" className="w-full" asChild>
-                      <Link to="/calendar">View Full Schedule</Link>
-                    </Button>
-                  }
-                >
-                  <div className="space-y-3 mt-2">
-                    {upcomingClasses.map((cls, i) => (
-                      <div key={i} className="flex items-start py-2 border-b last:border-0">
-                        <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
-                          <Clock className="h-5 w-5 text-primary" />
-                        </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Calendar className="mr-2 h-5 w-5 text-muted-foreground" />
+                    Today's Schedule
+                  </CardTitle>
+                  <CardDescription>Your upcoming classes for today</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {upcomingClasses.map((item) => (
+                      <div key={item.id} className="flex justify-between items-start border-b pb-3">
                         <div>
-                          <div className="font-medium text-sm">{cls.course}</div>
-                          <div className="text-xs text-muted-foreground mt-1">{cls.time} • {cls.room}</div>
+                          <h4 className="font-medium">{item.course}</h4>
+                          <div className="flex items-center text-sm text-muted-foreground mt-1">
+                            <Clock className="mr-1 h-3 w-3" /> {item.time}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Room {item.room}
+                          </div>
+                        </div>
+                        <div className="text-sm font-medium text-primary">
+                          {/* Calculate time left */}
+                          {Math.floor(Math.random() * 120)} min
                         </div>
                       </div>
                     ))}
                   </div>
-                </DashboardCard>
-              </div>
-            </div>
-
-            <DashboardCard 
-              title="Recent Announcements" 
-              description="Latest updates from the administration"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                {recentAnnouncements.map((announcement, i) => (
-                  <div key={i} className="p-4 border rounded-lg bg-card hover:shadow-subtle transition-shadow">
-                    <div className="text-sm font-medium mb-1">{announcement.title}</div>
-                    <div className="text-xs text-muted-foreground mb-2">{announcement.date}</div>
-                    <p className="text-sm">{announcement.description}</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <LineChart className="mr-2 h-5 w-5 text-muted-foreground" />
+                    Recent Activities
+                  </CardTitle>
+                  <CardDescription>Your latest academic activities</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {recentActivities.map((item) => (
+                      <div key={item.id} className="flex justify-between items-start border-b pb-3">
+                        <div>
+                          <h4 className="font-medium">{item.action}</h4>
+                          <div className="text-sm text-muted-foreground">{item.course}</div>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {item.date}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </DashboardCard>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {userRole === "admin" && (
+              <Tabs defaultValue="overview" className="w-full">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                  <TabsTrigger value="reports">Reports</TabsTrigger>
+                </TabsList>
+                <TabsContent value="overview">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>System Overview</CardTitle>
+                      <CardDescription>Summary of the college management system</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p>View detailed statistics and metrics about your educational institution.</p>
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-4 border rounded-lg">
+                          <h3 className="font-medium mb-2">Academic Performance</h3>
+                          <p className="text-sm text-muted-foreground">Average GPA: 3.2</p>
+                          <p className="text-sm text-muted-foreground">Highest GPA: 4.0</p>
+                          <p className="text-sm text-muted-foreground">Graduation Rate: 92%</p>
+                        </div>
+                        <div className="p-4 border rounded-lg">
+                          <h3 className="font-medium mb-2">Campus Statistics</h3>
+                          <p className="text-sm text-muted-foreground">Buildings: 12</p>
+                          <p className="text-sm text-muted-foreground">Classrooms: 86</p>
+                          <p className="text-sm text-muted-foreground">Labs: 24</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                <TabsContent value="analytics">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Analytics</CardTitle>
+                      <CardDescription>Advanced data analysis for your institution</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p>Detailed analytics would be displayed here.</p>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                <TabsContent value="reports">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Reports</CardTitle>
+                      <CardDescription>Generated reports and documents</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p>Reports would be displayed here.</p>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            )}
           </div>
         </PageTransition>
       </main>

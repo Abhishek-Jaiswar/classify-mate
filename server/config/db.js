@@ -1,9 +1,10 @@
+
 import { connect } from "mongoose";
 
 const connectDB = async () => {
   try {
     await connect(
-      process.env.MONGODB_URI || "mongodb://localhost:27017/eduSync"
+      process.env.MONGO_URI || "mongodb://localhost:27017/eduSync"
     );
     console.log("MongoDB connected");
   } catch (error) {

@@ -11,6 +11,7 @@ import { BookOpen, Plus, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { UserRole } from "@/types";
 
 // Sample course data
 const courses = [
@@ -79,9 +80,7 @@ const courses = [
 const Courses = () => {
   const [searchQuery, setSearchQuery] = useState("");
   // For demo purposes, we'll use "admin" role
-  const userRole = "admin" as const;
-  type UserRole = "admin" | "teacher" | "student";
-  const role: UserRole = userRole;
+  const userRole: UserRole = "admin";
   const userName = "John Doe";
   
   // Filter courses based on search query
@@ -97,7 +96,7 @@ const Courses = () => {
 
   return (
     <div className="min-h-screen flex">
-      <Sidebar role={role} userName={userName} />
+      <Sidebar role={userRole} userName={userName} />
       
       <main className="flex-1">
         <Navbar />
@@ -119,7 +118,7 @@ const Courses = () => {
                   />
                 </div>
                 
-                {role === "admin" && (
+                {userRole === "admin" && (
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button>
@@ -163,7 +162,7 @@ const Courses = () => {
                   </Dialog>
                 )}
                 
-                {role === "teacher" && (
+                {userRole === "teacher" && (
                   <Button>
                     <BookOpen className="mr-2 h-4 w-4" />
                     My Courses
@@ -172,7 +171,7 @@ const Courses = () => {
               </div>
             </div>
 
-            {role === "student" ? (
+            {userRole === "student" ? (
               <Tabs defaultValue="enrolled" className="w-full mb-6">
                 <TabsList className="mb-4">
                   <TabsTrigger value="enrolled">My Courses</TabsTrigger>
@@ -220,9 +219,9 @@ const Courses = () => {
                     title={course.title}
                     instructor={course.instructor}
                     description={course.description}
-                    progress={role === "student" ? course.progress : undefined}
+                    progress={userRole === "student" ? course.progress : undefined}
                     credits={course.credits}
-                    enrolled={role === "student" && course.enrolled}
+                    enrolled={userRole === "student" && course.enrolled}
                   />
                 ))}
               </div>
