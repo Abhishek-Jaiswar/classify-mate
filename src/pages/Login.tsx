@@ -8,16 +8,107 @@ import { GraduationCap } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
+
+interface FormData {
+  email: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+}
 
 const Login = () => {
   const [role, setRole] = useState<"admin" | "teacher" | "student">("student");
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState<FormData>({
+    email: "",
+    password: "",
+    firstName: "",
+    lastName: "",
+  });
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would authenticate with Clerk
-    // For demo, we'll just redirect to the dashboard
-    navigate("/dashboard");
+    setLoading(true);
+    
+    try {
+      // In a real app, this would call the backend API
+      console.log("Attempting login with:", { email: formData.email, password: formData.password, role });
+
+      // Simulate API call - this would be replaced with a fetch to your backend
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      // For demo purposes, we're just checking some basic conditions
+      // In a real app, we'd validate credentials against the database
+      if (formData.email && formData.password) {
+        toast.success(`Logged in successfully as ${role}`);
+        
+        // Redirect based on role
+        switch (role) {
+          case "admin":
+            navigate("/admin/dashboard");
+            break;
+          case "teacher":
+            navigate("/teacher/dashboard");
+            break;
+          case "student":
+            navigate("/dashboard");
+            break;
+          default:
+            navigate("/dashboard");
+        }
+      } else {
+        toast.error("Please enter valid credentials");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("Failed to login. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      // Validate form data
+      if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
+        toast.error("Please fill in all required fields");
+        return;
+      }
+      
+      console.log("Attempting signup with:", { 
+        email: formData.email, 
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        role 
+      });
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      
+      toast.success("Account created successfully! Please log in.");
+      
+      // Switch to login tab after successful signup
+      document.getElementById("signin-trigger")?.click();
+    } catch (error) {
+      console.error("Signup error:", error);
+      toast.error("Failed to create account. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -39,7 +130,7 @@ const Login = () => {
 
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger id="signin-trigger" value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
 
@@ -55,7 +146,14 @@ const Login = () => {
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <Input id="email" type="email" placeholder="m@example.com" required />
+                      <Input 
+                        id="email" 
+                        type="email" 
+                        placeholder="m@example.com" 
+                        required 
+                        value={formData.email}
+                        onChange={handleChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -64,7 +162,13 @@ const Login = () => {
                           Forgot password?
                         </Link>
                       </div>
-                      <Input id="password" type="password" required />
+                      <Input 
+                        id="password" 
+                        type="password" 
+                        required 
+                        value={formData.password}
+                        onChange={handleChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Login as</Label>
@@ -82,8 +186,8 @@ const Login = () => {
                         ))}
                       </div>
                     </div>
-                    <Button type="submit" className="w-full">
-                      Sign In
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? "Signing in..." : "Sign In"}
                     </Button>
                   </form>
                 </CardContent>
@@ -99,24 +203,47 @@ const Login = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form className="space-y-4">
+                  <form onSubmit={handleSignup} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="firstname">First name</Label>
-                        <Input id="firstname" required />
+                        <Label htmlFor="firstName">First name</Label>
+                        <Input 
+                          id="firstName" 
+                          required 
+                          value={formData.firstName}
+                          onChange={handleChange}
+                        />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="lastname">Last name</Label>
-                        <Input id="lastname" required />
+                        <Label htmlFor="lastName">Last name</Label>
+                        <Input 
+                          id="lastName" 
+                          required 
+                          value={formData.lastName}
+                          onChange={handleChange}
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <Input id="email" type="email" placeholder="m@example.com" required />
+                      <Input 
+                        id="email" 
+                        type="email" 
+                        placeholder="m@example.com" 
+                        required 
+                        value={formData.email}
+                        onChange={handleChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password">Password</Label>
-                      <Input id="password" type="password" required />
+                      <Input 
+                        id="password" 
+                        type="password" 
+                        required 
+                        value={formData.password}
+                        onChange={handleChange}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Register as</Label>
@@ -134,8 +261,8 @@ const Login = () => {
                         ))}
                       </div>
                     </div>
-                    <Button type="submit" className="w-full">
-                      Create account
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? "Creating account..." : "Create account"}
                     </Button>
                   </form>
                 </CardContent>
