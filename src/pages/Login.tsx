@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { loginUser, registerUser } from "@/utils/authService";
 
 interface FormData {
   email: string;
@@ -41,37 +41,26 @@ const Login = () => {
     setLoading(true);
     
     try {
-      // In a real app, this would call the backend API
-      console.log("Attempting login with:", { email: formData.email, password: formData.password, role });
-
-      // Simulate API call - this would be replaced with a fetch to your backend
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await loginUser(formData.email, formData.password);
+      toast.success(`Logged in successfully as ${response.user.role}`);
       
-      // For demo purposes, we're just checking some basic conditions
-      // In a real app, we'd validate credentials against the database
-      if (formData.email && formData.password) {
-        toast.success(`Logged in successfully as ${role}`);
-        
-        // Redirect based on role
-        switch (role) {
-          case "admin":
-            navigate("/admin/dashboard");
-            break;
-          case "teacher":
-            navigate("/teacher/dashboard");
-            break;
-          case "student":
-            navigate("/dashboard");
-            break;
-          default:
-            navigate("/dashboard");
-        }
-      } else {
-        toast.error("Please enter valid credentials");
+      // Redirect based on role
+      switch (response.user.role) {
+        case "admin":
+          navigate("/admin/dashboard");
+          break;
+        case "teacher":
+          navigate("/teacher/dashboard");
+          break;
+        case "student":
+          navigate("/dashboard");
+          break;
+        default:
+          navigate("/dashboard");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
-      toast.error("Failed to login. Please try again.");
+      toast.error(error.response?.data?.message || "Failed to login. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -85,27 +74,26 @@ const Login = () => {
       // Validate form data
       if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
         toast.error("Please fill in all required fields");
+        setLoading(false);
         return;
       }
       
-      console.log("Attempting signup with:", { 
-        email: formData.email, 
+      const userData = {
+        email: formData.email,
         password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        role 
-      });
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+        firstName: formData.firstName || "",
+        lastName: formData.lastName || "",
+        role
+      };
       
-      toast.success("Account created successfully! Please log in.");
+      const response = await registerUser(userData);
+      toast.success("Account created successfully!");
       
       // Switch to login tab after successful signup
       document.getElementById("signin-trigger")?.click();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Signup error:", error);
-      toast.error("Failed to create account. Please try again.");
+      toast.error(error.response?.data?.message || "Failed to create account. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -164,6 +152,7 @@ const Login = () => {
                       </div>
                       <Input 
                         id="password" 
+                        type="password" 
                         type="password" 
                         required 
                         value={formData.password}
